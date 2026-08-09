@@ -3,19 +3,19 @@ package image
 import "core:fmt"
 import "core:os"
 
-Pixel :: [3]u8
+Color :: [3]u8
 
 Image :: struct {
   w: int,
   h: int,
-  buffer: []Pixel,
+  buffer: []Color,
 }
 
 
 make_image :: proc(width, height: int) -> Image {
   assert(width * height != 0)
 
-  buffer := make([]Pixel, width * height)
+  buffer := make([]Color, width * height)
   return Image {
     w = width,
     h = height,
@@ -29,15 +29,15 @@ destroy_image :: proc(image: ^Image) {
 }
 
 
-set_pixel :: proc(image: ^Image, row: int, col: int, pixel: Pixel) {
+set_pixel :: proc(image: ^Image, row: int, col: int, color: Color) {
   assert(0 <= row && row < image.w)
   assert(0 <= col && col < image.h)
 
-  image.buffer[row * image.w + col] = pixel
+  image.buffer[row * image.w + col] = color
 }
 
 
-get_pixel :: proc(image: ^Image, row: int, col: int) -> Pixel {
+get_pixel :: proc(image: ^Image, row: int, col: int) -> Color {
   assert(0 <= row && row < image.w)
   assert(0 <= col && col < image.h)
 
@@ -57,8 +57,42 @@ save_image_as_ppm :: proc(image: ^Image, path: string) {
   os.write(handle, transmute([]u8)string("255\n"))
 
   // contents
-  for pixel in image.buffer {
+  for color in image.buffer {
     os.write(handle, 
-      transmute([]u8)fmt.tprintf("%d %d %d ", pixel.r, pixel.g, pixel.b))
+      transmute([]u8)fmt.tprintf("%d %d %d ", color.r, color.g, color.b))
+  }
+}
+
+
+line :: proc(img: ^Image, ax: int, ay: int, bx: int, by: int, color: Color) {
+  assert(0 <= ax && ax <= img.h)
+  assert(0 <= ay && ay <= img.w)
+  assert(0 <= bx && bx <= img.h)
+  assert(0 <= by && by <= img.w)
+
+  ax := ax
+  bx := bx
+  ay := ay
+  by := by
+
+  is_steep := abs(ax - bx) < abs(ay - by)
+  if is_steep {
+    ax, ay = ay, ax
+    bx, by = by, bx
+  }
+
+  if ax > bx {
+    ax, bx = bx, ax
+    ay, by = by, ay
+  }
+
+  for x in ax..=bx {
+    t := f64(x - ax) / f64(bx-ax)
+    y := int(f64(ay) + t*f64(by-ay))
+    if is_steep {
+      set_pixel(img, y, x, color)
+    } else {
+      set_pixel(img, x, y, color)
+    }
   }
 }

@@ -3,12 +3,11 @@ package main
 import "core:fmt"
 import "image"
 
-
-white   :: image.Pixel{255, 255, 255}
-green   :: image.Pixel{  0, 255,   0}
-red     :: image.Pixel{255,   0,   0}
-blue    :: image.Pixel{  0,   0, 255}
-yellow  :: image.Pixel{255, 255, 200}
+white   :: image.Color{255, 255, 255}
+green   :: image.Color{  0, 255,   0}
+red     :: image.Color{255,   0,   0}
+blue    :: image.Color{  0,   0, 255}
+yellow  :: image.Color{255, 255, 200}
 
 main :: proc() {
   width  :: 64
@@ -20,9 +19,13 @@ main :: proc() {
   bx, by := 12, 37
   cx, cy := 62, 53
   
-  image.set_pixel(&img, ax, ay, white)
-  image.set_pixel(&img, bx, by, white)
-  image.set_pixel(&img, cx, cy, white)
+  image.set_pixel(&img, ax, ay, red)
+  image.set_pixel(&img, bx, by, green)
+  image.set_pixel(&img, cx, cy, blue)
+
+  image.line(&img, ax, ay, bx, by, red)
+  image.line(&img, bx, by, cx, cy, green)
+  image.line(&img, cx, cy, ax, ay, blue)
 
   image.save_image_as_ppm(&img, "output.ppm")
 }
