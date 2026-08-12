@@ -3,24 +3,20 @@ package image
 import "core:fmt"
 import "core:os"
 
-Color :: [3]u8
+Colour :: [3]u8
 
 Image :: struct {
-  w: int,
-  h: int,
-  buffer: []Color,
+  w:      int,
+  h:      int,
+  buffer: []Colour,
 }
 
 
 make_image :: proc(width, height: int) -> Image {
-  assert(width * height != 0)
+  assert(width > 0 && height > 0)
 
-  buffer := make([]Color, width * height)
-  return Image {
-    w = width,
-    h = height,
-    buffer = buffer
-  }
+  buffer := make([]Colour, width * height)
+  return Image{w = width, h = height, buffer = buffer}
 }
 
 
@@ -29,19 +25,19 @@ destroy_image :: proc(image: ^Image) {
 }
 
 
-set_pixel :: proc(image: ^Image, row: int, col: int, color: Color) {
-  assert(0 <= row && row < image.w)
-  assert(0 <= col && col < image.h)
+set_pixel :: proc(image: ^Image, x, y: int, color: Colour) {
+  assert(0 <= x && x < image.w)
+  assert(0 <= y && y < image.h)
 
-  image.buffer[row * image.w + col] = color
+  image.buffer[x * image.w + y] = color
 }
 
 
-get_pixel :: proc(image: ^Image, row: int, col: int) -> Color {
-  assert(0 <= row && row < image.w)
-  assert(0 <= col && col < image.h)
+get_pixel :: proc(image: ^Image, x, y: int) -> Colour {
+  assert(0 <= x && x < image.w)
+  assert(0 <= y && y < image.h)
 
-  return image.buffer[row * image.w + col]
+  return image.buffer[x * image.w + y]
 }
 
 
@@ -58,41 +54,38 @@ save_image_as_ppm :: proc(image: ^Image, path: string) {
 
   // contents
   for color in image.buffer {
-    os.write(handle, 
-      transmute([]u8)fmt.tprintf("%d %d %d ", color.r, color.g, color.b))
+    os.write(handle, transmute([]u8)fmt.tprintf("%d %d %d ", color.r, color.g, color.b))
   }
 }
 
 
-line :: proc(img: ^Image, ax: int, ay: int, bx: int, by: int, color: Color) {
-  assert(0 <= ax && ax <= img.h)
-  assert(0 <= ay && ay <= img.w)
-  assert(0 <= bx && bx <= img.h)
-  assert(0 <= by && by <= img.w)
+line :: proc(img: ^Image, a: [2]int, b: [2]int, color: Colour) {
+  assert(0 <= a.x && a.x < img.w)
+  assert(0 <= a.y && a.y < img.h)
+  assert(0 <= b.x && b.x < img.w)
+  assert(0 <= b.y && b.y < img.h)
 
-  ax := ax
-  bx := bx
-  ay := ay
-  by := by
+  a := a
+  b := b
 
-  is_steep := abs(ax - bx) < abs(ay - by)
+  is_steep := abs(a.x - b.x) < abs(a.y - b.y)
   if is_steep {
-    ax, ay = ay, ax
-    bx, by = by, bx
+    a.xy = a.yx
+    b.xy = b.yx
   }
 
-  if ax > bx {
-    ax, bx = bx, ax
-    ay, by = by, ay
+  if a.x > b.x {
+    a.x, b.x = b.x, a.x
+    a.y, b.y = b.y, a.y
   }
 
-  for x in ax..=bx {
-    t := f64(x - ax) / f64(bx-ax)
-    y := int(f64(ay) + t*f64(by-ay))
+  y := f64(a.y)
+  for x in a.x ..= b.x {
     if is_steep {
-      set_pixel(img, y, x, color)
+      set_pixel(img, int(y), x, color)
     } else {
-      set_pixel(img, x, y, color)
+      set_pixel(img, x, int(y), color)
     }
+    y += f64(b.y - a.y) / f64(b.x - a.x)
   }
 }
