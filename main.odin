@@ -21,7 +21,7 @@ project_point :: proc(point: [3]f64) -> [2]f64 {
 // convert a 2D point in [-1, 1]^2 to screenspace coords
 point_to_screenspace :: proc(point: [2]f64, img: ^image.Image) -> [2]int {
   x := (point.x + 1) * 0.5 * f64(img.w - 1)
-  y := (point.y + 1) * 0.5 * f64(img.h - 1)
+  y := (1 - point.y) * 0.5 * f64(img.h - 1)
   return [2]int{int(x), int(y)}
 }
 
@@ -39,14 +39,13 @@ draw_mesh :: proc(img: ^image.Image, obj: ^object.WavefrontObject) {
 
 
 main :: proc() {
-  width  :: 100
-  height :: 100
+  width  :: 500
+  height :: 500
   img := image.make_image(width, height)
   defer image.destroy_image(&img)
 
   diablo := object.parse_object_file("assets/diablo.obj")
   defer object.destroy_wave_front_object(&diablo)
-
   draw_mesh(&img, &diablo)
 
   image.save_image_as_ppm(&img, "output.ppm")

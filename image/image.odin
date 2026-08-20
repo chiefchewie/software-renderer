@@ -29,7 +29,7 @@ set_pixel :: proc(image: ^Image, x, y: int, color: Colour) {
   assert(0 <= x && x < image.w)
   assert(0 <= y && y < image.h)
 
-  image.buffer[x * image.w + y] = color
+  image.buffer[y * image.w + x] = color
 }
 
 
@@ -37,7 +37,7 @@ get_pixel :: proc(image: ^Image, x, y: int) -> Colour {
   assert(0 <= x && x < image.w)
   assert(0 <= y && y < image.h)
 
-  return image.buffer[x * image.w + y]
+  return image.buffer[y * image.w + x]
 }
 
 

@@ -5,7 +5,7 @@ import "core:strconv"
 import "core:strings"
 
 Vertex :: [3]f64
-Face :: [3]int
+Face   :: [3]int
 
 WavefrontObject :: struct {
   vertices: [dynamic]Vertex,
