@@ -30,19 +30,14 @@ draw_mesh :: proc(img: ^image.Image, obj: ^object.WavefrontObject) {
 		u := point_to_screenspace(project_point(obj.vertices[face[0]]), img)
 		v := point_to_screenspace(project_point(obj.vertices[face[1]]), img)
 		w := point_to_screenspace(project_point(obj.vertices[face[2]]), img)
-		random_colour := image.Colour {
-			u8(rand.int_max(256)),
-			u8(rand.int_max(256)),
-			u8(rand.int_max(256)),
-		}
-		triangle(img, u, v, w, random_colour)
+		triangle(img, u, v, w, {1, 0, 0}, {0, 1, 0}, {0, 0, 1})
 	}
 }
 
-signed_triangle_area :: proc(p1, p2, p3: [2]int) -> int {
+signed_triangle_area :: proc(p1, p2, p3: [2]int) -> f64 {
 	u := p2 - p1
 	v := p3 - p1
-	return linalg.cross(u, v)
+	return f64(linalg.cross(u, v))
 }
 
 contains :: proc(p1, p2, p3, p: [2]int) -> bool {
@@ -53,7 +48,7 @@ contains :: proc(p1, p2, p3, p: [2]int) -> bool {
 	)
 }
 
-triangle :: proc(img: ^image.Image, p1, p2, p3: [2]int, colour: image.Colour) {
+triangle :: proc(img: ^image.Image, p1, p2, p3: [2]int, c1, c2, c3: image.Colour) {
 	if signed_triangle_area(p1, p2, p3) < 1 {
 		return // cull triangles facing backwards or less than one pixel
 	}
@@ -63,10 +58,17 @@ triangle :: proc(img: ^image.Image, p1, p2, p3: [2]int, colour: image.Colour) {
 	maxy := math.max(p1.y, p2.y, p3.y)
 	miny := math.min(p1.y, p2.y, p3.y)
 
+	area := signed_triangle_area(p1, p2, p3)
+
 	// todo: SIMD this
 	for x := minx; x <= maxx; x += 1 {
 		for y := miny; y <= maxy; y += 1 {
-			if contains(p1, p2, p3, {x, y}) {
+			p := [2]int{x, y}
+			if contains(p1, p2, p3, p) {
+				w1 := signed_triangle_area(p, p1, p2) / area
+				w2 := signed_triangle_area(p, p2, p3) / area
+				w3 := signed_triangle_area(p, p3, p1) / area
+				colour := w1 * c1 + w2 * c2 + w3 * c3
 				image.set_pixel(img, x, y, colour)
 			}
 		}
@@ -79,9 +81,11 @@ main :: proc() {
 	img := image.make_image(width, height)
 	defer image.destroy_image(&img)
 
-	diablo := object.parse_object_file("assets/diablo.obj")
-	defer object.destroy_wave_front_object(&diablo)
-	draw_mesh(&img, &diablo)
+	triangle(&img, {0, 0}, {400, 150}, {250, 470}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1})
+
+	// diablo := object.parse_object_file("assets/diablo.obj")
+	// defer object.destroy_wave_front_object(&diablo)
+	// draw_mesh(&img, &diablo)
 
 	image.save_image_as_ppm(&img, "output2.ppm")
 }

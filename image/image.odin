@@ -3,7 +3,7 @@ package image
 import "core:fmt"
 import "core:os"
 
-Colour :: [3]u8
+Colour :: [3]f64
 
 Image :: struct {
 	w:      int,
@@ -22,11 +22,11 @@ destroy_image :: proc(image: ^Image) {
 	delete(image.buffer)
 }
 
-set_pixel :: proc(image: ^Image, x, y: int, color: Colour) {
+set_pixel :: proc(image: ^Image, x, y: int, colour: Colour) {
 	assert(0 <= x && x < image.w)
 	assert(0 <= y && y < image.h)
 
-	image.buffer[y * image.w + x] = color
+	image.buffer[y * image.w + x] = colour
 }
 
 get_pixel :: proc(image: ^Image, x, y: int) -> Colour {
@@ -48,12 +48,15 @@ save_image_as_ppm :: proc(image: ^Image, path: string) {
 	os.write(handle, transmute([]u8)string("255\n"))
 
 	// contents
-	for color in image.buffer {
-		os.write(handle, transmute([]u8)fmt.tprintf("%d %d %d ", color.r, color.g, color.b))
+	for colour in image.buffer {
+		r := u8(colour.r * 255)
+		g := u8(colour.g * 255)
+		b := u8(colour.b * 255)
+		os.write(handle, transmute([]u8)fmt.tprintf("%d %d %d ", r, g, b))
 	}
 }
 
-line :: proc(img: ^Image, a: [2]int, b: [2]int, color: Colour) {
+line :: proc(img: ^Image, a: [2]int, b: [2]int, colour: Colour) {
 	assert(0 <= a.x && a.x < img.w)
 	assert(0 <= a.y && a.y < img.h)
 	assert(0 <= b.x && b.x < img.w)
@@ -76,9 +79,9 @@ line :: proc(img: ^Image, a: [2]int, b: [2]int, color: Colour) {
 	y := f64(a.y)
 	for x in a.x ..= b.x {
 		if is_steep {
-			set_pixel(img, int(y), x, color)
+			set_pixel(img, int(y), x, colour)
 		} else {
-			set_pixel(img, x, int(y), color)
+			set_pixel(img, x, int(y), colour)
 		}
 		y += f64(b.y - a.y) / f64(b.x - a.x)
 	}
