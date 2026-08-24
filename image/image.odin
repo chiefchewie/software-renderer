@@ -11,6 +11,12 @@ Image :: struct {
 	buffer: []Colour,
 }
 
+RED :: Colour{255, 0, 0}
+GREEN :: Colour{0, 255, 0}
+BLUE :: Colour{0, 0, 255}
+WHITE :: Colour{255, 255, 255}
+YELLOW :: Colour{255, 255, 200}
+
 make_image :: proc(width, height: int) -> Image {
 	assert(width > 0 && height > 0)
 
@@ -34,26 +40,6 @@ get_pixel :: proc(image: ^Image, x, y: int) -> Colour {
 	assert(0 <= y && y < image.h)
 
 	return image.buffer[y * image.w + x]
-}
-
-save_image_as_ppm :: proc(image: ^Image, path: string) {
-	handle, err := os.open(path, os.O_WRONLY | os.O_CREATE | os.O_TRUNC)
-	assert(err == nil)
-
-	defer os.close(handle)
-
-	// image header
-	os.write(handle, transmute([]u8)string("P3\n"))
-	os.write(handle, transmute([]u8)fmt.tprintf("%d %d\n", image.w, image.h))
-	os.write(handle, transmute([]u8)string("255\n"))
-
-	// contents
-	for colour in image.buffer {
-		r := u8(colour.r * 255)
-		g := u8(colour.g * 255)
-		b := u8(colour.b * 255)
-		os.write(handle, transmute([]u8)fmt.tprintf("%d %d %d ", r, g, b))
-	}
 }
 
 line :: proc(img: ^Image, a: [2]int, b: [2]int, colour: Colour) {
@@ -84,5 +70,25 @@ line :: proc(img: ^Image, a: [2]int, b: [2]int, colour: Colour) {
 			set_pixel(img, x, int(y), colour)
 		}
 		y += f64(b.y - a.y) / f64(b.x - a.x)
+	}
+}
+
+save_image_as_ppm :: proc(image: ^Image, path: string) {
+	handle, err := os.open(path, os.O_WRONLY | os.O_CREATE | os.O_TRUNC)
+	assert(err == nil)
+
+	defer os.close(handle)
+
+	// image header
+	os.write(handle, transmute([]u8)string("P3\n"))
+	os.write(handle, transmute([]u8)fmt.tprintf("%d %d\n", image.w, image.h))
+	os.write(handle, transmute([]u8)string("255\n"))
+
+	// contents
+	for colour in image.buffer {
+		r := u8(colour.r * 255)
+		g := u8(colour.g * 255)
+		b := u8(colour.b * 255)
+		os.write(handle, transmute([]u8)fmt.tprintf("%d %d %d ", r, g, b))
 	}
 }

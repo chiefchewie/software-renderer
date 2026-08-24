@@ -12,11 +12,6 @@ WavefrontObject :: struct {
 	faces:    [dynamic]Face,
 }
 
-destroy_wave_front_object :: proc(obj: ^WavefrontObject) {
-	delete(obj.vertices)
-	delete(obj.faces)
-}
-
 parse_object_file :: proc(filepath: string) -> WavefrontObject {
 	data, err := os.read_entire_file_from_path(filepath, context.allocator)
 	if err != nil {
@@ -57,4 +52,9 @@ parse_object_file :: proc(filepath: string) -> WavefrontObject {
 		}
 	}
 	return obj
+}
+
+destroy_wave_front_object :: proc(obj: ^WavefrontObject) {
+	delete(obj.vertices)
+	delete(obj.faces)
 }
